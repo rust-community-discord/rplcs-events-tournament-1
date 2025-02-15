@@ -1,1 +1,37 @@
-/target
+# Ignore dot directories and files
+.*/
+
+# Ignore target directory
+/**/target/
+
+# Ignore build artifacts
+**/*.rs.bk
+**/*.d
+**/*.o
+**/*.so
+**/*.a
+**/*.rlib
+
+# Ignore Cargo.lock if you are building a library
+Cargo.lock
+
+# Ignore IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore .sqlite files
+*.sqlite
+
+# Ignore results and reports
+results/
+report/
+
+# Ignore SVG
+*.svg

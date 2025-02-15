@@ -1,6 +1,26 @@
 [package]
-name = "rplcs-tournament-1-http"
+name = "rplcs_tournament_1_http"
 version = "0.1.0"
 edition = "2021"
+license = "AGPL-3.0"
 
 [dependencies]
+round_robin = "1.0"
+anyhow = "1.0"
+rplcs_events = { path = "../rplcs_events" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+petgraph = "0.7"
+rand = "0.9"
+tokio = { version = "1.0", features = ["full"] }
+reqwest = { version = "0.12", features = ["json"] }
+log = "0.4"
+env_logger = "0.11"
+layout-rs = "0.1"
+r2d2_sqlite = "0.26"
+r2d2 = "0.8"
+rusqlite = { version = "0.33", features = ["bundled"] }
+
+[dev-dependencies]
+quickcheck = "1"
+quickcheck_macros = "1"
