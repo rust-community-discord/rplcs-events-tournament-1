@@ -1,6 +1,15 @@
 [package]
-name = "rplcs-tournament-1-http"
+name = "rplcs-tournament-1"
 version = "0.1.0"
 edition = "2021"
+license = "AGPL-3.0"
 
 [dependencies]
+round_robin = "1.0"
+anyhow = "1.0"
+wasmtime = "29.0"
+rplcs_events = { path = "../rplcs_events" }
+serde = "1.0"
+serde_json = "1.0"
+petgraph = "0.7"
+rand = "0.9"
