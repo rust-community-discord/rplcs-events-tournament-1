@@ -1,7 +1,7 @@
 use axum::{
+    Json, Router,
     extract::{Query, State},
     routing::{get, post},
-    Json, Router,
 };
 use log::{debug, info};
 use rplcs_events::tournament_1::{

@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use log::debug;
 use r2d2::Pool;
-use r2d2_sqlite::rusqlite::params;
 use r2d2_sqlite::SqliteConnectionManager;
+use r2d2_sqlite::rusqlite::params;
 use rusqlite::OptionalExtension;
 use std::time::Duration;
 use std::{collections::HashMap, fs, sync::Arc};

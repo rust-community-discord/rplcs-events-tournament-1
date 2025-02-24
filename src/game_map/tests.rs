@@ -4,8 +4,8 @@ use std::path::Path;
 
 use petgraph::graph::DiGraph;
 use petgraph::{graph::NodeIndex, visit::EdgeRef};
-use quickcheck::{quickcheck, TestResult};
-use rand::{rngs::StdRng, SeedableRng};
+use quickcheck::{TestResult, quickcheck};
+use rand::{SeedableRng, rngs::StdRng};
 use rplcs_events::tournament_1::{MapNodeType, PlayerState};
 
 use crate::game_map::GameMap;

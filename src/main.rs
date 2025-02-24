@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use container::{Container, ContainerHandle};
 use game::{Game, GameResult};
 use log::{debug, error, info, warn};
