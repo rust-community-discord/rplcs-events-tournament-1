@@ -1,4 +1,4 @@
-use crate::{TURNS_PER_GAME, db::Database, game_map::GameMap, submission::Submission};
+use crate::{db::Database, game_map::GameMap, get_turns_per_game, submission::Submission};
 use anyhow::{Context, Result, anyhow};
 use log::{debug, info};
 use petgraph::graph::NodeIndex;
@@ -98,7 +98,7 @@ impl Game {
             .get_matchup_order(self.players[0].name(), self.players[1].name())
             .await;
 
-        for current_turn in 0..TURNS_PER_GAME {
+        for current_turn in 0..get_turns_per_game() {
             // First, save the current state as SVG
             let svg_path = PathBuf::from(format!(
                 "results/visualizations/{}_vs_{}/game_{}/turn_{}.svg",

@@ -2,8 +2,8 @@ use anyhow::{Context, Result, bail};
 use container::{Container, ContainerHandle};
 use game::{Game, GameResult};
 use log::{debug, error, info, warn};
-use std::fs;
 use std::time::Duration;
+use std::{env, fs};
 use submission::Submission;
 use tokio::task::JoinSet;
 use tokio::time::timeout;
@@ -16,8 +16,6 @@ mod port_utils;
 mod submission;
 use db::Database;
 
-const ROUNDS_PER_PAIR: i64 = 10;
-const TURNS_PER_GAME: i64 = 100;
 const CONTAINER_TIMEOUT: Duration = Duration::from_secs(10);
 const GAME_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -134,12 +132,13 @@ async fn run_games(
     db: &Database,
 ) -> Result<Vec<GameResult>> {
     let matchup_id = db.start_matchup(&submission_a, &submission_b).await?;
+    let rounds_per_pair = get_rounds_per_pair();
 
     let mut tasks = JoinSet::new();
-    for game_number in 0..ROUNDS_PER_PAIR {
+    for game_number in 0..rounds_per_pair {
         let is_reversed = game_number % 2 != 0;
         let effective_game_number = if is_reversed {
-            ROUNDS_PER_PAIR + game_number
+            rounds_per_pair + game_number
         } else {
             game_number
         };
@@ -171,7 +170,7 @@ async fn run_games(
         ));
     }
 
-    let mut results = Vec::with_capacity(ROUNDS_PER_PAIR as usize);
+    let mut results = Vec::with_capacity(rounds_per_pair as usize);
     while let Some(result) = tasks.join_next().await {
         match result
             .context("Failed to join task")?
@@ -226,4 +225,18 @@ async fn run_game(
             bail!("Game timed out")
         }
     }
+}
+
+fn get_rounds_per_pair() -> i64 {
+    env::var("ROUNDS_PER_PAIR")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(50)
+}
+
+fn get_turns_per_game() -> i64 {
+    env::var("TURNS_PER_GAME")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(100)
 }

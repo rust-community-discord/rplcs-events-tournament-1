@@ -47,7 +47,10 @@ where two players compete on a graph and battle each other to decide who wins.
 ## Tournament Format
 
 - Round-robin tournament where each submission plays against all others
-- 50 games per matchup (25 games as first player, 25 as second)
+- Default is 50 games per matchup (25 games as first player, 25 as second)
+  - Can be configured with `ROUNDS_PER_PAIR` environment variable
+- Each game runs for up to 100 turns by default
+  - Can be configured with `TURNS_PER_GAME` environment variable
 - Results are stored in a SQLite database
 - Game states are saved as SVG visualizations
 - Final rankings determined by win/loss ratio
