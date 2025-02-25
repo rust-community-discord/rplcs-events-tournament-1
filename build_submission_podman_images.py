@@ -46,10 +46,9 @@ def build_submission(submission_path: Path) -> None:
             ["podman", "build", "-t", image_name, "."],
             cwd=submission_path,
             check=True,
-            capture_output=True,
             text=True
         )
-        print(f"Successfully built {submission_name}: {result.stdout}")
+        print(f"Successfully built {submission_name}")
     except subprocess.CalledProcessError as e:
         print(f"Failed to build {submission_name}")
         print("Error output:")

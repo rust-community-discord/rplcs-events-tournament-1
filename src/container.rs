@@ -48,7 +48,7 @@ impl Container {
 
         debug!("Running command: {:?}", command);
         command
-            .output()
+            .status()
             .await
             .context("Failed to start container")?;
 
