@@ -1,4 +1,4 @@
-use crate::{db::Database, game_map::GameMap, get_turns_per_game, submission::Submission};
+use crate::{db::Database, game_map::GameMap, submission::Submission, Config};
 use anyhow::{Context, Result, anyhow};
 use log::{debug, info};
 use petgraph::graph::NodeIndex;
@@ -26,6 +26,7 @@ pub struct Game {
     seed: i64,
     game_id: i64,
     matchup_id: i64,
+    config: Config,
 }
 
 #[derive(Debug, Clone)]
@@ -41,7 +42,7 @@ enum FightTarget {
 }
 
 impl Game {
-    pub fn new(player_a: Submission, player_b: Submission, game_id: i64, matchup_id: i64) -> Self {
+    pub fn new(player_a: Submission, player_b: Submission, game_id: i64, matchup_id: i64, config: Config) -> Self {
         info!(
             "Creating game {} between {} and {}",
             game_id,
@@ -71,6 +72,7 @@ impl Game {
             seed,
             game_id,
             matchup_id,
+            config,
         };
 
         // Initialize both enemies
@@ -98,7 +100,7 @@ impl Game {
             .get_matchup_order(self.players[0].name(), self.players[1].name())
             .await;
 
-        for current_turn in 0..get_turns_per_game() {
+        for current_turn in 0..(self.config.turns_per_game as i64) {
             // First, save the current state as SVG
             let svg_path = PathBuf::from(format!(
                 "results/visualizations/{}_vs_{}/game_{}/turn_{}.svg",
@@ -176,7 +178,8 @@ impl Game {
 
         info!(
             "Game {} ended in tie after {} turns",
-            self.game_id, TURNS_PER_GAME
+            self.game_id,
+            self.config.turns_per_game,
         );
         let result = GameResult::Tie;
         db.update_game_result(self.matchup_id, game_db_id, result)

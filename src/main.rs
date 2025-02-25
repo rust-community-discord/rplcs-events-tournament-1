@@ -1,9 +1,12 @@
 use anyhow::{Context, Result, bail};
 use container::{Container, ContainerHandle};
+use figment::providers::{Env, Format as _, Serialized, Toml};
+use figment::Figment;
 use game::{Game, GameResult};
-use log::{debug, error, info, warn};
+use log::{debug, error, info, warn, LevelFilter};
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
-use std::{env, fs};
+use std::fs;
 use submission::Submission;
 use tokio::task::JoinSet;
 use tokio::time::timeout;
@@ -16,8 +19,34 @@ mod port_utils;
 mod submission;
 use db::Database;
 
-const CONTAINER_TIMEOUT: Duration = Duration::from_secs(10);
-const GAME_TIMEOUT: Duration = Duration::from_secs(30);
+#[derive(Deserialize, Serialize, Clone)]
+struct Config {
+    container_timeout: f32,
+    game_timeout: f32,
+    rounds_per_pair: u64,
+    turns_per_game: u64,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            container_timeout: 10.0,
+            game_timeout: 30.0,
+            rounds_per_pair: 50,
+            turns_per_game: 100,
+        }
+    }
+}
+
+impl Config {
+    fn container_timeout(&self) -> Duration {
+        Duration::from_secs_f32(self.container_timeout)
+    }
+
+    fn game_timeout(&self) -> Duration {
+        Duration::from_secs_f32(self.game_timeout)
+    }
+}
 
 /// Tournament runner for RPLCS HTTP submissions
 ///
@@ -28,8 +57,18 @@ const GAME_TIMEOUT: Duration = Duration::from_secs(30);
 /// Available log levels: error, warn, info, debug, trace
 #[tokio::main(flavor = "multi_thread", worker_threads = 12)]
 async fn main() -> Result<()> {
-    env_logger::init();
+    env_logger::builder()
+        .filter_level(LevelFilter::Info)
+        .init();
+
     info!("Starting the tournament runner");
+
+    // Load config options.
+    let config: Config = Figment::new()
+        .merge(Serialized::defaults(Config::default()))
+        .merge(Toml::file("config.toml"))
+        .merge(Env::prefixed("RPLCS_"))
+        .extract()?;
 
     let submissions_dir = "submissions";
     let submission_names =
@@ -56,23 +95,28 @@ async fn main() -> Result<()> {
 
         let container_results = tokio::join!(
             async {
-                timeout(CONTAINER_TIMEOUT, Container::new(&submission_a))
+                timeout(config.container_timeout(), Container::new(&submission_a))
                     .await
                     .context("Container A startup timed out")?
-                    .context("Failed to create container for {submission_a}")
+                    .context(format!("Failed to create container A for {submission_a}"))
             },
             async {
-                timeout(CONTAINER_TIMEOUT, Container::new(&submission_b))
+                timeout(config.container_timeout(), Container::new(&submission_b))
                     .await
                     .context("Container B startup timed out")?
-                    .context("Failed to create container for {submission_b}")
+                    .context(format!("Failed to create container B for {submission_b}"))
             }
         );
 
         let (container_a, container_b) = match container_results {
             (Ok(a), Ok(b)) => (a, b),
+            (Err(e), Err(e2)) => {
+                error!("Failed to initialize container A: {:?}", e);
+                error!("Failed to initialize container B: {:?}", e2);
+                continue;
+            }
             (Err(e), _) | (_, Err(e)) => {
-                error!("Failed to initialize containers: {}", e);
+                error!("Failed to initialize containers: {:?}", e);
                 continue;
             }
         };
@@ -87,6 +131,7 @@ async fn main() -> Result<()> {
                 handle_a,
                 handle_b,
                 &db,
+                &config,
             )
             .await
         };
@@ -130,9 +175,11 @@ async fn run_games(
     container_a: ContainerHandle,
     container_b: ContainerHandle,
     db: &Database,
+    config: &Config,
 ) -> Result<Vec<GameResult>> {
     let matchup_id = db.start_matchup(&submission_a, &submission_b).await?;
-    let rounds_per_pair = get_rounds_per_pair();
+    // let rounds_per_pair = get_rounds_per_pair();
+    let rounds_per_pair = config.rounds_per_pair as i64;
 
     let mut tasks = JoinSet::new();
     for game_number in 0..rounds_per_pair {
@@ -167,6 +214,7 @@ async fn run_games(
             second_container,
             matchup_id,
             db.clone(),
+            config.clone(),
         ));
     }
 
@@ -197,6 +245,7 @@ async fn run_game(
     second_container: ContainerHandle,
     matchup_id: i64,
     db: Database,
+    config: Config,
 ) -> Result<GameResult> {
     debug!(
         "Starting game {} between {} and {}",
@@ -207,11 +256,11 @@ async fn run_game(
         let first = Submission::new(first_submission.as_str(), first_container);
         let second = Submission::new(second_submission.as_str(), second_container);
 
-        let mut game = Game::new(first, second, game_id, matchup_id);
+        let mut game = Game::new(first, second, game_id, matchup_id, config.clone());
         game.result(&db).await.context("Failed to run game")
     };
 
-    match timeout(GAME_TIMEOUT, game_future).await {
+    match timeout(config.game_timeout(), game_future).await {
         Ok(result) => {
             let result = result.context("Failed to get game result")?;
             info!(
@@ -221,22 +270,8 @@ async fn run_game(
             Ok(result)
         }
         Err(_) => {
-            error!("Game {} timed out after {:?}", game_id, GAME_TIMEOUT);
+            error!("Game {} timed out after {:?}", game_id, config.game_timeout());
             bail!("Game timed out")
         }
     }
-}
-
-fn get_rounds_per_pair() -> i64 {
-    env::var("ROUNDS_PER_PAIR")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(50)
-}
-
-fn get_turns_per_game() -> i64 {
-    env::var("TURNS_PER_GAME")
-        .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(100)
 }
