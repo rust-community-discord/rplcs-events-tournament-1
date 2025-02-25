@@ -20,6 +20,7 @@ layout-rs = "0.1"
 r2d2_sqlite = "0.26"
 r2d2 = "0.8"
 rusqlite = { version = "0.33", features = ["bundled"] }
+figment = { version = "0.10.19", features = ["toml", "env"] }
 
 [dev-dependencies]
 quickcheck = "1"
