@@ -145,6 +145,7 @@ impl GameMap {
         self.graph.node_weight(node).copied()
     }
 
+    #[cfg(test)]
     pub fn node_weights(&self) -> Vec<MapNodeType> {
         self.graph.node_weights().copied().collect()
     }
@@ -155,6 +156,7 @@ impl GameMap {
             .collect()
     }
 
+    #[cfg(test)]
     pub fn get_incoming_edges(&self, node: NodeIndex) -> Vec<EdgeReference<'_, ()>> {
         self.graph
             .edges_directed(node, petgraph::Direction::Incoming)

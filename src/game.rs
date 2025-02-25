@@ -176,7 +176,8 @@ impl Game {
 
         info!(
             "Game {} ended in tie after {} turns",
-            self.game_id, TURNS_PER_GAME
+            self.game_id,
+            get_turns_per_game()
         );
         let result = GameResult::Tie;
         db.update_game_result(self.matchup_id, game_db_id, result)
