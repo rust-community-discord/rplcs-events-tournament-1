@@ -1146,6 +1146,8 @@ checksum = "2bf4fc03e479edd650a548f00b9434e04680da5298d49103459c4d621ceaa825"
 [[package]]
 name = "rplcs_events"
 version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cca43a0eb8081480c3c3d93f50eb1076f3107d0ba74609086826681803db00fd"
 dependencies = [
  "serde",
  "serde_json",

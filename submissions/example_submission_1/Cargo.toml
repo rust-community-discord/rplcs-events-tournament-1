@@ -4,8 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-rplcs_events = { path = "rplcs_events" }
-# rplcs_events = { path = "../../../rplcs_events" }
+rplcs_events = "1.0"
 axum = "0.8"
 tokio = { version = "1.0", features = ["full"] }
 serde_json = "1.0"
