@@ -80,8 +80,8 @@ async fn main() -> Result<()> {
     );
 
     // TODO: making this shorter for testing
-    // let round_robin_pairs = vec![(submission_names[0].clone(), submission_names[1].clone())];
-    let round_robin_pairs = round_robin::generate_rounds(submission_names);
+    let round_robin_pairs = vec![(submission_names[0].clone(), submission_names[1].clone())];
+    // let round_robin_pairs = round_robin::generate_rounds(submission_names);
     info!(
         "Generated {} matchups for round-robin tournament",
         round_robin_pairs.len()

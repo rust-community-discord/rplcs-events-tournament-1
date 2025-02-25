@@ -2,7 +2,10 @@ use anyhow::{Context, Result};
 use log::{debug, info, warn};
 use reqwest::Client;
 use serde::Serialize;
-use std::time::{Duration, Instant};
+use std::{
+    env,
+    time::{Duration, Instant},
+};
 use tokio::{process::Command, time::sleep};
 
 use crate::port_utils::get_next_port;
@@ -49,10 +52,15 @@ impl Container {
             .await
             .context("Failed to start container")?;
 
+        let timeout = env::var("CONTAINER_TIMEOUT")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(1);
+
         let handle = ContainerHandle {
             port,
             http_client: Client::builder()
-                .timeout(Duration::from_secs(5))
+                .timeout(Duration::from_secs(timeout))
                 .build()
                 .context("Failed to create HTTP client")?,
         };
