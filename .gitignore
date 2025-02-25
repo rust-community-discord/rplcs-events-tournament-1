@@ -35,3 +35,6 @@ report/
 
 # Ignore SVG
 *.svg
+
+# Ignore config.toml
+config.toml
